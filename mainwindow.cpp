@@ -60,8 +60,16 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::on_pushButton_3_clicked()
 {
-    qDebug() << "remove" << ui->tableWidget->currentRow() << endl;
-    ui->tableWidget->removeRow(ui->tableWidget->currentRow());
+
+    if (ui->tableWidget->currentRow() != ui->tableWidget->rowCount() - 1)
+    {
+        ui->tableWidget->removeRow(ui->tableWidget->currentRow());
+        qDebug() << "remove" << ui->tableWidget->currentRow() << "line" << endl;
+    }
+    else
+    {
+        qDebug() << "can't delete last row" << endl;
+    }
 }
 
 
