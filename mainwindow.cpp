@@ -1,7 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QtSql>
-
 #include <QMessageBox>
 #include <QDebug>
 
@@ -12,6 +10,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->lineEdit_3->setValidator(new QRegExpValidator(QRegExp("\\d\\d\\d\\d")));
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("todo.db");
 }
 
 MainWindow::~MainWindow()
@@ -104,8 +104,6 @@ void MainWindow::on_pushButton_4_clicked()
 void MainWindow::on_pushButton_5_clicked()
 {
     numRowsInDB = 1;
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("./todo.db");
 
     if (!db.open())
     {
@@ -143,16 +141,29 @@ void MainWindow::on_pushButton_5_clicked()
 
          i++;
      }
+     db.removeDatabase("todo.db");
 
 }
 
 void MainWindow::on_pushButton_6_clicked()
 {
-    for (int i = 0; i < ui->tableWidget->rowCount(); i++)
+
+    if (!db.open())
     {
-        for (int j = 0; j < 3; j++)
-        {
-            QString data = ui->tableWidget->;
-        }
+        QMessageBox::critical(this, "Error", "Error open database");
     }
+    else
+    {
+        for (int i = 0; i < ui->tableWidget->rowCount() - 1; i++)
+        {
+            QString name = ui->tableWidget->item(i, 0)->text();
+            QString model = ui->tableWidget->item(i, 1)->text();
+            QString year = ui->tableWidget->item(i, 2)->text();
+            QSqlQuery query;
+            query.prepare(QString("INSERT INTO Computers (Name, Model, Year) VALUES ('%1', '%2', '%3');").arg(name).arg(model).arg(year));
+
+        }
+        QMessageBox::information(this, "Complete", "Saving completed");
+    }
+
 }

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QValidator>
+#include <QtSql>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -39,6 +40,8 @@ private:
     Ui::MainWindow *ui;
 
     int numRowsInDB;
+
+    QSqlDatabase db;
 
 };
 #endif // MAINWINDOW_H
