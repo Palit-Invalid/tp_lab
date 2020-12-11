@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QtSql>
+
 #include <QMessageBox>
 #include <QDebug>
 
@@ -9,11 +11,12 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->lineEdit_3->setValidator(new QRegExpValidator(QRegExp("\\d\\d\\d\\d")));
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    delete ui;  
 }
 
 
@@ -27,7 +30,7 @@ void MainWindow::on_pushButton_clicked()
         QMessageBox::warning(this, "Warning", "Fields are ampty");
         qDebug() << "Error, fields are empty" << endl;
     }
-    else
+
     {
         QTableWidgetItem* name = new QTableWidgetItem();
         name->setText(ui->lineEdit->text());
@@ -95,5 +98,61 @@ void MainWindow::on_pushButton_4_clicked()
     if (answer == QMessageBox::Yes)
     {
         QApplication::exit();
+    }
+}
+
+void MainWindow::on_pushButton_5_clicked()
+{
+    numRowsInDB = 1;
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("./todo.db");
+
+    if (!db.open())
+    {
+        QMessageBox::critical(this, "Error", "Error open database");
+    }
+    else
+    {
+        QMessageBox::information(this, "Complete", "Database connected!");
+    }
+
+    QSqlQuery query("SELECT * FROM Computers");
+
+     query.last();
+     numRowsInDB = query.at() + 2;
+     ui->tableWidget->setRowCount(numRowsInDB);
+     qDebug() << numRowsInDB - 1 << "num rows in database" << endl;
+
+
+     query.exec("SELECT * FROM Computers");
+
+     int i = 0;
+     while (query.next())
+     {
+         QTableWidgetItem* name = new QTableWidgetItem();
+         name->setText(query.value(1).toString());
+         ui->tableWidget->setItem(i,0,name);
+
+         QTableWidgetItem* model = new QTableWidgetItem();
+         model->setText(query.value(2).toString());
+         ui->tableWidget->setItem(i,1,model);
+
+         QTableWidgetItem* year = new QTableWidgetItem();
+         year->setText(query.value(3).toString());
+         ui->tableWidget->setItem(i,2,year);
+
+         i++;
+     }
+
+}
+
+void MainWindow::on_pushButton_6_clicked()
+{
+    for (int i = 0; i < ui->tableWidget->rowCount(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            QString data = ui->tableWidget->;
+        }
     }
 }
