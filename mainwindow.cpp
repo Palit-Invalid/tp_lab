@@ -170,28 +170,35 @@ void MainWindow::connectToDB()
 
         query.last();
         numRowsInDB = query.at() + 2;
-        ui->tableWidget->setRowCount(numRowsInDB);
-        qDebug() << numRowsInDB - 1 << "num rows in database" << endl;
 
+        qDebug() << numRowsInDB  << "num rows in database" << endl;
+        if (numRowsInDB == 0)
+        {
+            ui->tableWidget->setRowCount(numRowsInDB+1);
+        }
+        else
+        {
+            ui->tableWidget->setRowCount(numRowsInDB);
+        }
 
-         query.exec("SELECT * FROM Computers");
+        query.exec("SELECT * FROM Computers");
 
-         int i = 0;
-         while (query.next())
-         {
-             QTableWidgetItem* name = new QTableWidgetItem();
-             name->setText(query.value(1).toString());
-             ui->tableWidget->setItem(i,0,name);
+        int i = 0;
+        while (query.next())
+        {
+            QTableWidgetItem* name = new QTableWidgetItem();
+            name->setText(query.value(1).toString());
+            ui->tableWidget->setItem(i,0,name);
 
-             QTableWidgetItem* model = new QTableWidgetItem();
-             model->setText(query.value(2).toString());
-             ui->tableWidget->setItem(i,1,model);
+            QTableWidgetItem* model = new QTableWidgetItem();
+            model->setText(query.value(2).toString());
+            ui->tableWidget->setItem(i,1,model);
 
-             QTableWidgetItem* year = new QTableWidgetItem();
-             year->setText(query.value(3).toString());
-             ui->tableWidget->setItem(i,2,year);
+            QTableWidgetItem* year = new QTableWidgetItem();
+            year->setText(query.value(3).toString());
+            ui->tableWidget->setItem(i,2,year);
 
-             i++;
+            i++;
          }
     }
     db.removeDatabase("todo.db");
