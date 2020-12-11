@@ -1,17 +1,18 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QMessageBox>
-#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , row(1)
     , ui(new Ui::MainWindow)
+    , was_change(false)
 {
     ui->setupUi(this);
-    ui->lineEdit_3->setValidator(new QRegExpValidator(QRegExp("\\d\\d\\d\\d")));
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers); // запрет на редактирвоание ячеек таблицы
+    ui->lineEdit_3->setValidator(new QRegExpValidator(QRegExp("\\d\\d\\d\\d"))); // проверка на валидность введённых данных
     db = QSqlDatabase::addDatabase("QSQLITE");
+
     db.setDatabaseName("todo.db");
+
 }
 
 MainWindow::~MainWindow()
@@ -19,18 +20,60 @@ MainWindow::~MainWindow()
     delete ui;  
 }
 
+void MainWindow::createDB()
+{
+    if (!db.open())
+    {
+        QMessageBox::critical(this, "Error", "Error create database");
+    }
+    else
+    {
+        QSqlQuery query;
+        query.exec("CREATE TABLE Computers "
+                   "(id	INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,"
+                   "Name TEXT,"
+                   "Model TEXT,"
+                   "Year TEXT)");
+    }
+    db.removeDatabase("todo.db");
+}
+
+void MainWindow::saveToDB()
+{
+    if (!db.open())
+    {
+        QMessageBox::critical(this, "Error", "Unable to sava data!");
+    }
+    else
+    {
+        QSqlQuery query;
+        query.exec("DELETE FROM Computers"); //очищаем таблицу
+
+        for (int i = 0; i < ui->tableWidget->rowCount() - 1; i++)
+        {
+            QString name = ui->tableWidget->item(i, 0)->text();
+            QString model = ui->tableWidget->item(i, 1)->text();
+            QString year = ui->tableWidget->item(i, 2)->text();
+
+            query.prepare(QString("INSERT INTO Computers (Name, Model, Year) VALUES ('%1', '%2', '%3');").arg(name).arg(model).arg(year));
+            query.exec();
+        }
+        db.removeDatabase("todo.db");
+    }
+    was_change = false;
+}
 
 void MainWindow::on_pushButton_clicked()
 {
 
     if (ui->lineEdit->text().isEmpty()
-            and ui->lineEdit_2->text().isEmpty()
-            and ui->lineEdit_3->text().isEmpty())
+            && ui->lineEdit_2->text().isEmpty()
+            && ui->lineEdit_3->text().isEmpty())
     {
         QMessageBox::warning(this, "Warning", "Fields are ampty");
         qDebug() << "Error, fields are empty" << endl;
     }
-
+    else
     {
         QTableWidgetItem* name = new QTableWidgetItem();
         name->setText(ui->lineEdit->text());
@@ -52,6 +95,7 @@ void MainWindow::on_pushButton_clicked()
         ui->lineEdit_2->clear();
         ui->lineEdit_3->clear();
     }
+    was_change = true;
 
 }
 
@@ -59,6 +103,7 @@ void MainWindow::on_pushButton_2_clicked()
 {
     ui->tableWidget->clearContents();
     qDebug() << "clear table" << endl;
+    was_change = true;
 }
 
 void MainWindow::on_pushButton_3_clicked()
@@ -73,6 +118,7 @@ void MainWindow::on_pushButton_3_clicked()
     {
         qDebug() << "can't delete last row" << endl;
     }
+    was_change = true;
 }
 
 
@@ -93,17 +139,25 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    QMessageBox::StandardButton answer = QMessageBox::question(this, "Exit", "Do you realy want to close programm?", QMessageBox::Yes | QMessageBox::No);
-
-    if (answer == QMessageBox::Yes)
+    if (was_change == true)
     {
-        QApplication::exit();
+        QMessageBox::StandardButton answer = QMessageBox::question(this, "Exit", "Do you want to save the changes made to the database file?", QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+
+        if (answer == QMessageBox::Save)
+        {
+            saveToDB();
+            QApplication::exit();
+        }
+        else if (answer == QMessageBox::Discard)
+        {
+            QApplication::exit();
+        }
     }
 }
 
-void MainWindow::on_pushButton_5_clicked()
+void MainWindow::connectToDB()
 {
-    numRowsInDB = 1;
+    int numRowsInDB = 1;
 
     if (!db.open())
     {
@@ -111,59 +165,39 @@ void MainWindow::on_pushButton_5_clicked()
     }
     else
     {
-        QMessageBox::information(this, "Complete", "Database connected!");
+        qDebug() << "Database connected" << endl;
+        QSqlQuery query("SELECT * FROM Computers");
+
+        query.last();
+        numRowsInDB = query.at() + 2;
+        ui->tableWidget->setRowCount(numRowsInDB);
+        qDebug() << numRowsInDB - 1 << "num rows in database" << endl;
+
+
+         query.exec("SELECT * FROM Computers");
+
+         int i = 0;
+         while (query.next())
+         {
+             QTableWidgetItem* name = new QTableWidgetItem();
+             name->setText(query.value(1).toString());
+             ui->tableWidget->setItem(i,0,name);
+
+             QTableWidgetItem* model = new QTableWidgetItem();
+             model->setText(query.value(2).toString());
+             ui->tableWidget->setItem(i,1,model);
+
+             QTableWidgetItem* year = new QTableWidgetItem();
+             year->setText(query.value(3).toString());
+             ui->tableWidget->setItem(i,2,year);
+
+             i++;
+         }
     }
-
-    QSqlQuery query("SELECT * FROM Computers");
-
-     query.last();
-     numRowsInDB = query.at() + 2;
-     ui->tableWidget->setRowCount(numRowsInDB);
-     qDebug() << numRowsInDB - 1 << "num rows in database" << endl;
-
-
-     query.exec("SELECT * FROM Computers");
-
-     int i = 0;
-     while (query.next())
-     {
-         QTableWidgetItem* name = new QTableWidgetItem();
-         name->setText(query.value(1).toString());
-         ui->tableWidget->setItem(i,0,name);
-
-         QTableWidgetItem* model = new QTableWidgetItem();
-         model->setText(query.value(2).toString());
-         ui->tableWidget->setItem(i,1,model);
-
-         QTableWidgetItem* year = new QTableWidgetItem();
-         year->setText(query.value(3).toString());
-         ui->tableWidget->setItem(i,2,year);
-
-         i++;
-     }
-     db.removeDatabase("todo.db");
-
+    db.removeDatabase("todo.db");
 }
 
 void MainWindow::on_pushButton_6_clicked()
 {
-
-    if (!db.open())
-    {
-        QMessageBox::critical(this, "Error", "Error open database");
-    }
-    else
-    {
-        for (int i = 0; i < ui->tableWidget->rowCount() - 1; i++)
-        {
-            QString name = ui->tableWidget->item(i, 0)->text();
-            QString model = ui->tableWidget->item(i, 1)->text();
-            QString year = ui->tableWidget->item(i, 2)->text();
-            QSqlQuery query;
-            query.prepare(QString("INSERT INTO Computers (Name, Model, Year) VALUES ('%1', '%2', '%3');").arg(name).arg(model).arg(year));
-
-        }
-        QMessageBox::information(this, "Complete", "Saving completed");
-    }
-
+    saveToDB();
 }

@@ -1,9 +1,14 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#define DB_NAME "todo.db"
+
 #include <QMainWindow>
 #include <QValidator>
 #include <QtSql>
+#include <QFile>
+#include <QMessageBox>
+#include <QDebug>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -17,7 +22,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    int row;
+    void createDB();
+
+    void connectToDB();
+
+    void saveToDB();
 
 private slots:
     void on_pushButton_clicked();
@@ -32,16 +41,14 @@ private slots:
 
     void on_pushButton_4_clicked();
 
-    void on_pushButton_5_clicked();
-
     void on_pushButton_6_clicked();
 
 private:
     Ui::MainWindow *ui;
 
-    int numRowsInDB;
-
     QSqlDatabase db;
+
+    bool was_change;
 
 };
 #endif // MAINWINDOW_H
