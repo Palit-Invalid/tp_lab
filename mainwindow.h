@@ -41,14 +41,10 @@ private slots:
 
     void on_pushButton_4_clicked();
 
-    void on_pushButton_6_clicked();
-
 private:
     Ui::MainWindow *ui;
 
     QSqlDatabase db;
-
-    bool was_change;
 
 };
 #endif // MAINWINDOW_H

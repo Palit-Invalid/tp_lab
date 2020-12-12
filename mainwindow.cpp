@@ -4,7 +4,6 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , was_change(false)
 {
     ui->setupUi(this);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers); // запрет на редактирвоание ячеек таблицы
@@ -12,11 +11,11 @@ MainWindow::MainWindow(QWidget *parent)
     db = QSqlDatabase::addDatabase("QSQLITE");
 
     db.setDatabaseName("todo.db");
-
 }
 
 MainWindow::~MainWindow()
 {
+    saveToDB();
     delete ui;  
 }
 
@@ -60,7 +59,6 @@ void MainWindow::saveToDB()
         }
         db.removeDatabase("todo.db");
     }
-    was_change = false;
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -95,20 +93,16 @@ void MainWindow::on_pushButton_clicked()
         ui->lineEdit_2->clear();
         ui->lineEdit_3->clear();
     }
-    was_change = true;
-
 }
 
 void MainWindow::on_pushButton_2_clicked()
 {
     ui->tableWidget->clearContents();
     qDebug() << "clear table" << endl;
-    was_change = true;
 }
 
 void MainWindow::on_pushButton_3_clicked()
 {
-
     if (ui->tableWidget->currentRow() != ui->tableWidget->rowCount() - 1)
     {
         ui->tableWidget->removeRow(ui->tableWidget->currentRow());
@@ -118,7 +112,6 @@ void MainWindow::on_pushButton_3_clicked()
     {
         qDebug() << "can't delete last row" << endl;
     }
-    was_change = true;
 }
 
 
@@ -139,19 +132,11 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    if (was_change == true)
-    {
-        QMessageBox::StandardButton answer = QMessageBox::question(this, "Exit", "Do you want to save the changes made to the database file?", QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    QMessageBox::StandardButton answer = QMessageBox::question(this, "Exit", "Do you realy want to close programm?", QMessageBox::Yes | QMessageBox::No);
 
-        if (answer == QMessageBox::Save)
-        {
-            saveToDB();
-            QApplication::exit();
-        }
-        else if (answer == QMessageBox::Discard)
-        {
-            QApplication::exit();
-        }
+    if (answer == QMessageBox::Yes)
+    {
+        QApplication::exit();
     }
 }
 
@@ -202,9 +187,4 @@ void MainWindow::connectToDB()
          }
     }
     db.removeDatabase("todo.db");
-}
-
-void MainWindow::on_pushButton_6_clicked()
-{
-    saveToDB();
 }
